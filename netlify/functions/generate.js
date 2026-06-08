@@ -1,26 +1,20 @@
 const https = require('https');
 
 exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-      body: '',
-    };
-  }
-
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
+  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json',
   };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
 
   let body;
   try {
@@ -57,9 +51,9 @@ Generate a response in this EXACT JSON format (no markdown, no code blocks, pure
   "title": "Optimized professional title matching the target role",
   "summary": "3-4 sentence ATS-optimized professional summary tailored to this specific job",
   "skills": [{"name": "Skill Name", "level": 85}],
-  "experience": [{"title": "Job Title", "company": "Company Name", "dates": "Month Year - Month Year", "bullets": ["Strong action verb + achievement with metric", "Another achievement", "Third achievement"]}],
+  "experience": [{"title": "Job Title", "company": "Company Name", "dates": "Month Year – Month Year", "bullets": ["Strong action verb + achievement with metric", "Another achievement", "Third achievement"]}],
   "education": [{"degree": "Degree Name", "school": "School Name", "year": "Year", "note": "GPA or honors if relevant"}],
-  "coverLetter": "Full 4-paragraph cover letter. Paragraph 1: Hook and why this company. Paragraph 2: Top 2-3 relevant experiences matching job requirements. Paragraph 3: Why you specifically fit this role. Paragraph 4: Call to action closing. Make it personal, professional, and reference the specific company and role."
+  "coverLetter": "Full 4-paragraph cover letter. Paragraph 1: Hook + why this company. Paragraph 2: Top 2-3 relevant experiences matching job requirements. Paragraph 3: Why you specifically fit this role. Paragraph 4: Call to action closing. Make it personal, professional, and reference the specific company/role."
 }
 
 IMPORTANT RULES:
@@ -100,11 +94,12 @@ IMPORTANT RULES:
             return;
           }
           const text = (parsed.content || []).map(b => b.text || '').join('');
+          // Clean and parse JSON from response
           const clean = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
           const result = JSON.parse(clean);
           resolve({ statusCode: 200, headers, body: JSON.stringify(result) });
         } catch (e) {
-          resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to parse AI response' }) });
+          resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to parse AI response', raw: data.substring(0, 500) }) });
         }
       });
     });
