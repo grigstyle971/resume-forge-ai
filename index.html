@@ -1156,15 +1156,45 @@ We're looking for an experienced engineer to:
     // ===== DOWNLOAD PDF =====
     function downloadPDF() {
       const el = document.getElementById('resume-output');
+      if (!el || !el.innerHTML.trim()) {
+        showToast('No resume to download yet!');
+        return;
+      }
+      // Clone and ensure visible for pdf capture
+      const clone = el.cloneNode(true);
+      clone.style.position = 'fixed';
+      clone.style.top = '0';
+      clone.style.left = '0';
+      clone.style.width = '794px';
+      clone.style.background = '#ffffff';
+      clone.style.zIndex = '-9999';
+      clone.style.opacity = '1';
+      clone.style.visibility = 'visible';
+      document.body.appendChild(clone);
+
       const opt = {
         margin: 0,
         filename: 'my-resume.pdf',
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          width: 794,
+          windowWidth: 794
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
-      html2pdf().set(opt).from(el).save();
-      showToast('📄 PDF downloading...');
+
+      showToast('Generating PDF...');
+      html2pdf().set(opt).from(clone).save().then(() => {
+        document.body.removeChild(clone);
+        showToast('PDF downloaded!');
+      }).catch(() => {
+        document.body.removeChild(clone);
+        showToast('PDF error - try Copy Text instead');
+      });
     }
 
     function copyResume() {
